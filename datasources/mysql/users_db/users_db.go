@@ -8,25 +8,28 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 )
+
 const (
-	mysql_user = "mysql_user"
-	mysql_pass = "mysql_pass"
-	mysql_host = "mysql_host"
+	mysql_user   = "mysql_user"
+	mysql_pass   = "mysql_pass"
+	mysql_host   = "mysql_host"
 	mysql_schema = "mysql_schema"
 )
-var(
-	Client *sql.DB
+
+var (
+	Client   *sql.DB
 	username = os.Getenv(mysql_user)
 	password = os.Getenv(mysql_pass)
-	host = os.Getenv(mysql_host)
-	scheme = os.Getenv(mysql_schema)
+	host     = os.Getenv(mysql_host)
+	scheme   = os.Getenv(mysql_schema)
 )
 
-func init(){
+func init() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	log.Println(username)
-	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8",username,password,host,scheme)
+	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8", username, password, host, scheme)
 	var err error
-	Client, err = sql.Open("mysql",dataSourceName)
+	Client, err = sql.Open("mysql", dataSourceName)
 
 	if err != nil {
 		panic(err)
