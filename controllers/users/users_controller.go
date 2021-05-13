@@ -87,6 +87,16 @@ func Delete(c *gin.Context) {
 	c.JSON(http.StatusOK, map[string]string{"status": "deleted"})
 }
 
+func Search(c *gin.Context) {
+	status := c.Query("status")
+	fusers, err := services.Search(status)
+	if err != nil {
+		c.JSON(err.Status, err)
+		return
+	}
+	c.JSON(http.StatusOK, fusers)
+}
+
 func getUserId(c *gin.Context) (int64, bool) {
 	userId, userErr := strconv.ParseInt(c.Param("user_id"), 10, 64)
 	if userErr != nil {
@@ -95,10 +105,4 @@ func getUserId(c *gin.Context) (int64, bool) {
 		return 0, true
 	}
 	return userId, false
-}
-
-func SearchUser(c *gin.Context) {
-
-	c.String(http.StatusNotImplemented, "implement me!")
-
 }
