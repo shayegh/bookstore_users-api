@@ -10,7 +10,7 @@ import (
 	"github.com/shayegh/bookstore_users-api/utils/errors"
 )
 
-func CreateUser(c *gin.Context) {
+func Create(c *gin.Context) {
 
 	var user users.User
 	// fmt.Println(user)
@@ -39,11 +39,9 @@ func CreateUser(c *gin.Context) {
 	c.JSON(http.StatusCreated, result)
 }
 
-func GetUser(c *gin.Context) {
-	userId, userErr := strconv.ParseInt(c.Param("user_id"), 10, 64)
-	if userErr != nil {
-		err := errors.NewBadRequestError("invalid user id")
-		c.JSON(err.Status, err)
+func Get(c *gin.Context) {
+	userId, done := getUserId(c)
+	if done {
 		return
 	}
 	user, err := services.GetUser(userId)
@@ -54,12 +52,10 @@ func GetUser(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-func UpdateUser(c *gin.Context) {
+func Update(c *gin.Context) {
 	var user users.User
-	userId, userErr := strconv.ParseInt(c.Param("user_id"), 10, 64)
-	if userErr != nil {
-		err := errors.NewBadRequestError("invalid user id")
-		c.JSON(err.Status, err)
+	userId, done := getUserId(c)
+	if done {
 		return
 	}
 
@@ -75,6 +71,30 @@ func UpdateUser(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, result)
+}
+
+func Delete(c *gin.Context) {
+	userId, done := getUserId(c)
+	if done {
+		return
+	}
+
+	err := services.DeleteUser(userId)
+	if err != nil {
+		c.JSON(err.Status, err)
+		return
+	}
+	c.JSON(http.StatusOK, map[string]string{"status": "deleted"})
+}
+
+func getUserId(c *gin.Context) (int64, bool) {
+	userId, userErr := strconv.ParseInt(c.Param("user_id"), 10, 64)
+	if userErr != nil {
+		err := errors.NewBadRequestError("invalid user id")
+		c.JSON(err.Status, err)
+		return 0, true
+	}
+	return userId, false
 }
 
 func SearchUser(c *gin.Context) {

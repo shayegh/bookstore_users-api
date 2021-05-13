@@ -1,6 +1,7 @@
 package users
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 
@@ -13,12 +14,13 @@ const (
 	queryInsertUser = "INSERT INTO users(first_name, last_name, email,date_created) VALUES (?,?,?,?); "
 	queryGetUser    = "SELECT id,first_name, last_name, email,date_created from users WHERE id = ?;"
 	queryUpdateUser = "UPDATE users SET first_name=?, last_name=?, email=? WHERE id = ?;"
+	queryDeleteUser = "DELETE from users WHERE id=?;"
 )
 
 func (user *User) Save() *errors.RestErr {
-	stmt, err := usersdb.Client.Prepare(queryInsertUser)
-	if err != nil {
-		return errors.NewInternalServerError(err.Error())
+	stmt, restErr := prepStatement(queryInsertUser)
+	if restErr != nil {
+		return restErr
 	}
 	defer stmt.Close()
 
@@ -43,9 +45,9 @@ func (user *User) Save() *errors.RestErr {
 }
 
 func (user *User) Get() *errors.RestErr {
-	stmt, err := usersdb.Client.Prepare(queryGetUser)
+	stmt, err := prepStatement(queryGetUser)
 	if err != nil {
-		return errors.NewInternalServerError(err.Error())
+		return err
 	}
 	defer stmt.Close()
 
@@ -62,15 +64,37 @@ func (user *User) Get() *errors.RestErr {
 }
 
 func (user *User) Update() *errors.RestErr {
-	stmt, err := usersdb.Client.Prepare(queryUpdateUser)
-	if err != nil {
-		return errors.NewInternalServerError(err.Error())
+	stmt, restErr := prepStatement(queryUpdateUser)
+	if restErr != nil {
+		return restErr
 	}
 	defer stmt.Close()
-
-	_, err = stmt.Exec(user.FirstName, user.LastName, user.Email, user.Id)
+	_, err := stmt.Exec(user.FirstName, user.LastName, user.Email, user.Id)
 	if err != nil {
 		return errors.NewInternalServerError(err.Error())
 	}
 	return nil
+}
+
+func (user *User) Delete() *errors.RestErr {
+	stmt, restErr := prepStatement(queryDeleteUser)
+	if restErr != nil {
+		return restErr
+	}
+	defer stmt.Close()
+
+	_, err := stmt.Exec(user.Id)
+	if err != nil {
+		return errors.NewInternalServerError(err.Error())
+	}
+	return nil
+}
+
+func prepStatement(queryString string) (*sql.Stmt, *errors.RestErr) {
+	stmt, err := usersdb.Client.Prepare(queryString)
+	if err != nil {
+		return nil, errors.NewInternalServerError(err.Error())
+	}
+
+	return stmt, nil
 }
