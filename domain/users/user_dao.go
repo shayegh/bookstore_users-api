@@ -3,6 +3,7 @@ package users
 import (
 	"database/sql"
 	"fmt"
+	"github.com/shayegh/bookstore_users-api/logger"
 	"strings"
 
 	usersdb "github.com/shayegh/bookstore_users-api/datasources/mysql/users_db"
@@ -52,11 +53,11 @@ func (user *User) Get() *errors.RestErr {
 	result := stmt.QueryRow(user.Id)
 
 	if err := result.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreated, &user.Status); err != nil {
-		fmt.Println(err)
+		logger.Error("Error getting user", err)
 		if strings.Contains(err.Error(), "no rows in result set") {
 			return errors.NewNotFoundError(fmt.Sprintf("User with Id %d not found", user.Id))
 		}
-		return errors.NewInternalServerError(fmt.Sprintf("Error while getting user %d : %s", user.Id, err.Error()))
+		return errors.NewInternalServerError("DataBase Error")
 	}
 	return nil
 }
@@ -119,7 +120,8 @@ func (user *User) FindByStatus(status string) ([]User, *errors.RestErr) {
 func prepStatement(queryString string) (*sql.Stmt, *errors.RestErr) {
 	stmt, err := usersdb.Client.Prepare(queryString)
 	if err != nil {
-		return nil, errors.NewInternalServerError(err.Error())
+		logger.Error("Error Preparing statement", err)
+		return nil, errors.NewInternalServerError("Database Error")
 	}
 
 	return stmt, nil
